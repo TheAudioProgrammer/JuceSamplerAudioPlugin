@@ -89,7 +89,7 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
-        BinaryData
+
         juce::juce_animation
         juce::juce_audio_utils
         juce::juce_dsp
