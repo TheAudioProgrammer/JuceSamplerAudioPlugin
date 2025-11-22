@@ -35,7 +35,6 @@ private:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     void clearUnusedOutputChannels(juce::AudioBuffer<float>& buffer) const;
 
-    // 3. Now we need to make this a member function
     juce::SamplerSound* loadSound(const juce::String& name,
                                     int originalMidiNote,
                                     const std::vector<int>& midiNoteSet,

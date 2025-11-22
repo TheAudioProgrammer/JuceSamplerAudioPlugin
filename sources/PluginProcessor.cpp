@@ -1,8 +1,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-/* Now let's pull out that sample loading capability into a function, since we will want the user
- * to be able to load their own sounds at some point! */
+
 juce::SamplerSound* SamplerAudioProcessor::loadSound(const juce::String& name,
                                     int originalMidiNote,
                                     const std::vector<int>& midiNoteSet,
@@ -38,11 +37,6 @@ SamplerAudioProcessor::SamplerAudioProcessor() :
     }
 
     formatManager.registerBasicFormats();
-
-    /* 3. Now we can add sounds to our synth using addSound(), and use the loadSound() function we've just created
-     * to load all our samples.  All the samples I have are on the white keys.
-     * Notice that I'm the using the BigInteger to pitch shift up a semitone to account for the black keys.
-     * This will give us all the notes from A0 - C8. */
 
     synth.addSound(loadSound("C5", 72, { 24, 25, 36, 37, 48, 49, 60, 61, 72, 73 }, BinaryData::c5_wav, BinaryData::c5_wavSize));
     synth.addSound(loadSound("D5", 74, { 26, 27, 38, 39, 50, 51, 62, 63, 74, 75, 86, 87, 98, 99 }, BinaryData::d5_wav, BinaryData::d5_wavSize));
