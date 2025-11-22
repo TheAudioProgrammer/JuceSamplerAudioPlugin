@@ -2,6 +2,9 @@
 
 #include "juce_audio_processors/juce_audio_processors.h"
 
+// 1. Must add the audio formats library that contains the Synthesiser Class
+#include "juce_audio_formats/juce_audio_formats.h"
+
 class SamplerAudioProcessor final : public juce::AudioProcessor
 {
 public:
@@ -32,6 +35,15 @@ public:
 private:
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     void clearUnusedOutputChannels(juce::AudioBuffer<float>& buffer) const;
+
+    /* 2. We'll create a Synthesiser object.  A better name for this would probably be MIDI Playback Engine
+     * Since this engine is used for both synths and samplers
+     * Synthesiser Class: https://docs.juce.com/master/classjuce_1_1Synthesiser.html */
+
+    juce::Synthesiser synth;
+
+    // 3. We'll make this a polyphonic synth.  Since this won't change we can make this constexpr
+    static constexpr auto numVoices = 8;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SamplerAudioProcessor)
 };
