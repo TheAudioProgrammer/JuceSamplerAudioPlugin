@@ -1,6 +1,33 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+/* Now let's pull out that sample loading capability into a function, since we will want the user
+ * to be able to load their own sounds at some point! */
+juce::SamplerSound* SamplerAudioProcessor::loadSound(const juce::String& name,
+                                    int originalMidiNote,
+                                    const std::vector<int>& midiNoteSet,
+                                    const void* data,
+                                    size_t sizeInBytes)
+{
+    // 1. We can pull all of this other stuff from the constructor to here.
+    auto inputStream = std::make_unique<juce::MemoryInputStream>(data, sizeInBytes, false);
+
+    if (auto reader = formatManager.createReaderFor(std::move(inputStream)))
+    {
+        juce::BigInteger midiNotes;
+
+        for (auto note : midiNoteSet)
+        {
+            midiNotes.setBit(note);
+        }
+
+        return new juce::SamplerSound(name, *reader, midiNotes, originalMidiNote, 0.0, 0.1, 10.0);
+    }
+
+    return nullptr;
+}
+
+
 SamplerAudioProcessor::SamplerAudioProcessor() :
     AudioProcessor(BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true)),
     apvts(*this, nullptr, "Parameters", createParameterLayout())
@@ -10,35 +37,21 @@ SamplerAudioProcessor::SamplerAudioProcessor() :
         synth.addVoice(new juce::SamplerVoice);
     }
 
-    juce::AudioFormatManager formatManager;
     formatManager.registerBasicFormats();
 
-    auto inputStream = std::make_unique<juce::MemoryInputStream>(BinaryData::c5_wav,
-                                                               BinaryData::c5_wavSize,
-                                                               false);
+    /* 3. Now we can add sounds to our synth using addSound(), and use the loadSound() function we've just created
+     * to load all our samples.  All the samples I have are on the white keys.
+     * Notice that I'm the using the BigInteger to pitch shift up a semitone to account for the black keys.
+     * This will give us all the notes from A0 - C8. */
 
-    if (auto reader = formatManager.createReaderFor(std::move(inputStream)))
-    {
-        const juce::String name = "C5";
-        int originalMidiNote = 60;
-
-        /* 1. Now let's demo how we can use this sample for multiple notes with a vector of notes we want the sample
-         * to trigger for.  This is where the original midi note variable comes into play.  The engine will use this
-         * to determine how much to pitch up / down the original sample to play in key. */
-        std::vector<int> midiNoteSet = { 60, 61, 62, 63, 64, 65, 66, 67 };
-
-        juce::BigInteger midiNotes;
-
-        // Now we turn on all the midi notes we want to trigger with this sample
-        for (auto note : midiNoteSet)
-        {
-            midiNotes.setBit(note);
-        }
-
-        auto sound = new juce::SamplerSound(name, *reader, midiNotes, originalMidiNote, 0.0, 0.1, 10.0);
-
-        synth.addSound(sound);
-    }
+    synth.addSound(loadSound("C5", 72, { 24, 25, 36, 37, 48, 49, 60, 61, 72, 73 }, BinaryData::c5_wav, BinaryData::c5_wavSize));
+    synth.addSound(loadSound("D5", 74, { 26, 27, 38, 39, 50, 51, 62, 63, 74, 75, 86, 87, 98, 99 }, BinaryData::d5_wav, BinaryData::d5_wavSize));
+    synth.addSound(loadSound("E5", 76, { 28, 40, 52, 64, 76, 88, 100 }, BinaryData::e5_wav, BinaryData::e5_wavSize));
+    synth.addSound(loadSound("F5", 77, { 29, 30, 41, 42, 53, 54, 65, 66, 77, 78, 89, 90, 101, 102 }, BinaryData::f5_wav, BinaryData::f5_wavSize));
+    synth.addSound(loadSound("G5", 79, { 31, 32, 43, 44, 55, 56, 67, 68, 79, 80, 91, 92, 103, 104 }, BinaryData::g5_wav, BinaryData::g5_wavSize));
+    synth.addSound(loadSound("A5", 81, { 21, 22, 33, 34, 45, 46, 57, 58, 69, 70, 81, 82, 93, 94, 105, 106 }, BinaryData::a5_wav, BinaryData::a5_wavSize));
+    synth.addSound(loadSound("B5", 83, { 23, 35, 47, 59, 71, 83, 95, 107 }, BinaryData::b5_wav, BinaryData::b5_wavSize));
+    synth.addSound(loadSound("C6", 84, { 84, 85, 96, 97, 108 }, BinaryData::c6_wav, BinaryData::c6_wavSize));
 }
 
 bool SamplerAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
