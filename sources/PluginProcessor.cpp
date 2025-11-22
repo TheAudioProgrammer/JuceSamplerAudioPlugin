@@ -5,13 +5,56 @@ SamplerAudioProcessor::SamplerAudioProcessor() :
     AudioProcessor(BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true)),
     apvts(*this, nullptr, "Parameters", createParameterLayout())
 {
-    /* Now we're going to add 8 SamplerVoices to the engine.  Think of a voice like a musician.
-     * Now they just need some sheet music...that is what to play.  That will come a little later
-     * with the SamplerSound class */
-
     for (int i = 0; i < numVoices; ++i)
     {
         synth.addVoice(new juce::SamplerVoice);
+    }
+
+    //! LOAD ONE SOUND FROM BINARY DATA
+
+    /* 1. The AudioFormatManager adds the ability to handle different types of audio formats, such as WAV and AIFF
+     * AudioFormatManager Class: https://docs.juce.com/master/classjuce_1_1AudioFormatManager.html */
+
+    juce::AudioFormatManager formatManager;
+
+    // 2. You must call registerBasicFormats() so the format manager can register handlers for these file types
+
+    formatManager.registerBasicFormats();
+
+    /* 3. First we need the sound we're trying to load.  We can use the MemoryInputStream class
+     * This would first start as auto sound = juce::MemoryInputStream(BinaryData::c5_wav, BinaryData::c5_wavSize, false);
+     * It needs to become a unique ptr later because createReaderFor() takes in a unique ptr
+     * MemoryInputStream Class: https://docs.juce.com/master/classjuce_1_1MemoryInputStream.html */
+
+    auto inputStream = std::make_unique<juce::MemoryInputStream>(BinaryData::c5_wav,
+                                                               BinaryData::c5_wavSize,
+                                                               false);
+
+    /* 4. Now that we've registered the formats, we use a JUCE MemoryInputStream to try and read in the first sound
+     * We use std::move to pass ownership from our PluginProcessor class to the Format Manager.
+     * Otherwise, both the PluginProcessor and AudioFormat objects would own the inputStream...forbidden by unique ptr
+     * Remember to check that the reader is not null before using it
+     * MemoryInputStream Class: https://docs.juce.com/master/classjuce_1_1MemoryInputStream.html */
+
+    if (auto reader = formatManager.createReaderFor(std::move(inputStream)))
+    {
+        // 6. I'll add some local variables because I will want to bring this out into its own function later
+        const juce::String name = "C5";
+        int originalMidiNote = 60; // Middle C
+
+        // 7. This enables us to be able to load the sound at multiple pitches if we want.
+        // Think of BigInteger as a set of all 128 midi notes, and I can switch each one on or off to trigger the same sample
+        juce::BigInteger midiNote;
+        midiNote.setBit(originalMidiNote);
+
+        /* 5. Now we create a SamplerSound that contains our wav file data and assigns it to a midi note with attack, release
+         * and max sample length of time (in seconds)
+         * SamplerSound Class: https://docs.juce.com/master/classjuce_1_1SamplerSound.html */
+
+        auto sound = new juce::SamplerSound(name, *reader, midiNote, originalMidiNote, 0.0, 0.1, 10.0);
+
+        // 6. Now we'll load the sound into the synth
+        synth.addSound(sound);
     }
 }
 
@@ -22,7 +65,6 @@ bool SamplerAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) c
 
 void SamplerAudioProcessor::prepareToPlay(double newSampleRate, int maximumBlockSize)
 {
-    // 4. We must declare the sample rate that the engine will need to play our sounds at
     synth.setCurrentPlaybackSampleRate(newSampleRate);
 }
 
@@ -30,11 +72,6 @@ void SamplerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
 {
     juce::ScopedNoDenormals noDenormals;
     clearUnusedOutputChannels(buffer);
-
-    /* 5. Now we can listen for new midi note inputs and trigger the sample
-     * Synthesiser renderNextBlock(): https://docs.juce.com/master/classjuce_1_1Synthesiser.html#a50c91e339697031682e7afb5ecc705c9
-     */
-
     synth.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
 }
 
