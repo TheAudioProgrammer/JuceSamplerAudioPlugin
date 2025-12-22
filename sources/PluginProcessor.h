@@ -41,17 +41,17 @@ private:
                                     const void* data,
                                     size_t sizeInBytes);
 
+    void updateDecay();
+    void updateReverb();
+
     juce::Synthesiser midiPlaybackEngine;
     static constexpr auto numVoices = 8;
 
     juce::AudioFormatManager formatManager;
 
-    // 1. Now let's add JUCE's stock reverb
     juce::Reverb reverb;
 
     float oldDecay = 0.0f;
-
-    // 5. Let's create a class member to store our previous reverb amount
     float oldReverb = 0.0f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SamplerAudioProcessor)

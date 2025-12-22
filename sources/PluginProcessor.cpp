@@ -25,6 +25,46 @@ juce::SamplerSound* SamplerAudioProcessor::loadSound(const juce::String& name,
     return nullptr;
 }
 
+void SamplerAudioProcessor::updateDecay()
+{
+    auto decay = apvts.getRawParameterValue("decay")->load();
+
+    if (!juce::approximatelyEqual(decay, oldDecay))
+    {
+        auto normalized = decay * 0.01f;
+        float skew = normalized * normalized;
+        float decayTime = 0.95f * skew + 0.05f;
+
+        for (int i = 0; i < midiPlaybackEngine.getNumSounds(); ++i)
+        {
+            if (auto* sound = dynamic_cast<juce::SamplerSound*>(midiPlaybackEngine.getSound(i).get()))
+            {
+                sound->setEnvelopeParameters({ 0.0f, decayTime, 0.0f, 0.05f });
+            }
+        }
+
+        // Store current decay to compare later
+        oldDecay = decay;
+    }
+}
+
+void SamplerAudioProcessor::updateReverb()
+{
+    float reverbPercent = apvts.getRawParameterValue("reverb")->load();
+
+    if (!juce::approximatelyEqual(reverbPercent, oldReverb))
+    {
+        oldReverb = reverbPercent;
+
+        juce::Reverb::Parameters reverbParams;
+        reverbParams.roomSize = reverbPercent * 0.01f;
+        reverbParams.damping = 0.5f;
+        reverbParams.wetLevel = 0.33f;
+        reverbParams.dryLevel = 0.4f;
+        reverb.setParameters(reverbParams);
+    }
+}
+
 
 SamplerAudioProcessor::SamplerAudioProcessor() :
     AudioProcessor(BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true)),
@@ -55,14 +95,9 @@ bool SamplerAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) c
 void SamplerAudioProcessor::prepareToPlay(double newSampleRate, int maximumBlockSize)
 {
     midiPlaybackEngine.setCurrentPlaybackSampleRate(newSampleRate);
-
-    /* 1. Any DSP algorithm needs to know the sample rate.  This is typically done via a prepare(), reset(), or
-    setSampleRate() function. */
     reverb.setSampleRate(newSampleRate);
 
     oldDecay = -1.0f;
-
-    // 6. Make sure oldReverb updates on the first audio update
     oldReverb = -1.0f;
 }
 
@@ -71,54 +106,9 @@ void SamplerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     juce::ScopedNoDenormals noDenormals;
     clearUnusedOutputChannels(buffer);
 
-    auto decay = apvts.getRawParameterValue("decay")->load();
-
-    if (!juce::approximatelyEqual(decay, oldDecay))
-    {
-        oldDecay = decay;
-
-        auto normalized = decay * 0.01f;
-        float skew = normalized * normalized;
-        float decayTime = 0.95f * skew + 0.05f;
-
-        // Store current decay to compare later
-        oldDecay = decay;
-
-        for (int i = 0; i < midiPlaybackEngine.getNumSounds(); ++i)
-        {
-            if (auto* sound = dynamic_cast<juce::SamplerSound*>(midiPlaybackEngine.getSound(i).get()))
-            {
-                sound->setEnvelopeParameters({ 0.0f, decayTime, 0.0f, 0.05f });
-            }
-        }
-    }
-
-    // 7. Get the reverb param
-    float reverbPercent = apvts.getRawParameterValue("reverb")->load();
-
-    // 7. We'll update the audio processing if the user has updated the value
-    if (!juce::approximatelyEqual(reverbPercent, oldReverb))
-    {
-        oldReverb = reverbPercent;
-
-        // 8. Reverb::Parameters is how you access the parameters in the reverb
-        juce::Reverb::Parameters reverbParams;
-
-        // 9. Normalize the reverb to 0-1
-        reverbParams.roomSize = reverbPercent * 0.01f;
-        reverbParams.damping = 0.5f;
-        reverbParams.wetLevel = 0.33f;
-        reverbParams.dryLevel = 0.4f;
-
-        // 10. Don't forget to call setParameters() after you've updated!
-        reverb.setParameters(reverbParams);
-    }
-
-    /* 11. Let's move our audio callback after the param updates, otherwise the audio won't be updated until the
-     * next callback. */
+    updateDecay();
+    updateReverb();
     midiPlaybackEngine.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
-
-    // 12. Add reverb on top
     reverb.processStereo(buffer.getWritePointer(0), buffer.getWritePointer(1), buffer.getNumSamples());
 }
 
@@ -162,7 +152,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout SamplerAudioProcessor::creat
         juce::AudioParameterFloatAttributes().
         withStringFromValueFunction(valueToPercentAsString)));
 
-    // 4. Let's now create a reverb parameter for the user to modify.
     layout.add(std::make_unique<juce::AudioParameterFloat>(
         juce::ParameterID { "reverb", 1 },
         "Reverb",
