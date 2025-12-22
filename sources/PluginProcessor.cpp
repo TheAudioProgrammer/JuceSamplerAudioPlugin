@@ -55,30 +55,30 @@ bool SamplerAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) c
 void SamplerAudioProcessor::prepareToPlay(double newSampleRate, int maximumBlockSize)
 {
     midiPlaybackEngine.setCurrentPlaybackSampleRate(newSampleRate);
+
+    /* 1. Any DSP algorithm needs to know the sample rate.  This is typically done via a prepare(), reset(), or
+    setSampleRate() function. */
+    reverb.setSampleRate(newSampleRate);
+
     oldDecay = -1.0f;
+
+    // 6. Make sure oldReverb updates on the first audio update
+    oldReverb = -1.0f;
 }
 
 void SamplerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
     clearUnusedOutputChannels(buffer);
-    midiPlaybackEngine.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
 
     auto decay = apvts.getRawParameterValue("decay")->load();
 
     if (!juce::approximatelyEqual(decay, oldDecay))
     {
+        oldDecay = decay;
+
         auto normalized = decay * 0.01f;
-
-        /* 1. Let's make the mapping of the decay a little more intuitive, giving the user more control over the range
-         * across the slider.  We'll do this by creating a quadratic mapping. This gives more granularity on the lower
-         * values, useful for filters, decays and other similar params. */
         float skew = normalized * normalized;
-
-        /* 2. We could just use skew to update our envelope parameter, and this would work fine.  However, at 0.0
-         * the sound is so short there is no audible output.  This might confuse users. We'll make the "real"
-         * minimum 0.05, the smallest value where we hear audible sound. But to keep the sound between 0.0 and 1.0,
-         * we need to slightly "shrink" our decay time from 1 to 0.95, since we're adding 0.05 at the end. */
         float decayTime = 0.95f * skew + 0.05f;
 
         // Store current decay to compare later
@@ -92,6 +92,34 @@ void SamplerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
             }
         }
     }
+
+    // 7. Get the reverb param
+    float reverbPercent = apvts.getRawParameterValue("reverb")->load();
+
+    // 7. We'll update the audio processing if the user has updated the value
+    if (!juce::approximatelyEqual(reverbPercent, oldReverb))
+    {
+        oldReverb = reverbPercent;
+
+        // 8. Reverb::Parameters is how you access the parameters in the reverb
+        juce::Reverb::Parameters reverbParams;
+
+        // 9. Normalize the reverb to 0-1
+        reverbParams.roomSize = reverbPercent * 0.01f;
+        reverbParams.damping = 0.5f;
+        reverbParams.wetLevel = 0.33f;
+        reverbParams.dryLevel = 0.4f;
+
+        // 10. Don't forget to call setParameters() after you've updated!
+        reverb.setParameters(reverbParams);
+    }
+
+    /* 11. Let's move our audio callback after the param updates, otherwise the audio won't be updated until the
+     * next callback. */
+    midiPlaybackEngine.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
+
+    // 12. Add reverb on top
+    reverb.processStereo(buffer.getWritePointer(0), buffer.getWritePointer(1), buffer.getNumSamples());
 }
 
 void SamplerAudioProcessor::clearUnusedOutputChannels(juce::AudioBuffer<float>& buffer) const
@@ -133,6 +161,15 @@ juce::AudioProcessorValueTreeState::ParameterLayout SamplerAudioProcessor::creat
         0.0f,
         juce::AudioParameterFloatAttributes().
         withStringFromValueFunction(valueToPercentAsString)));
+
+    // 4. Let's now create a reverb parameter for the user to modify.
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "reverb", 1 },
+        "Reverb",
+        juce::NormalisableRange<float>(0.0f, 100.0f),
+        50.0f,
+        juce::AudioParameterFloatAttributes()
+            .withStringFromValueFunction(valueToPercentAsString)));
 
     return layout;
 }
