@@ -55,6 +55,9 @@ bool SamplerAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) c
 void SamplerAudioProcessor::prepareToPlay(double newSampleRate, int maximumBlockSize)
 {
     midiPlaybackEngine.setCurrentPlaybackSampleRate(newSampleRate);
+
+    // 2. Force decay to be updated on first audio process call
+    oldDecay = -1.0f;
 }
 
 void SamplerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
@@ -63,19 +66,23 @@ void SamplerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     clearUnusedOutputChannels(buffer);
     midiPlaybackEngine.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
 
-    // 2. Now let's get the decay parameter from our parameter layout
     auto decay = apvts.getRawParameterValue("decay")->load();
 
-    /* 3. Since our decay param is 0.0 - 100.0 but our envelope function expects a value of 0.1 - 1.0,
-     * we will normalize our decay here. */
-    auto normalized = decay * 0.01f;
-
-    // 4. Now let's update each Sampler Sound with our new decay...
-    for (int i = 0; i < midiPlaybackEngine.getNumSounds(); ++i)
+    /* 3. Compare latest decay value with the old one.  If we have a new value, update the audio processing,
+     * otherwise skip unnecessary updates. */
+    if (juce::approximatelyEqual(decay, oldDecay))
     {
-        if (auto* sound = dynamic_cast<juce::SamplerSound*>(midiPlaybackEngine.getSound(i).get()))
+        auto normalized = decay * 0.01f;
+
+        // Store current decay to compare later
+        oldDecay = decay;
+
+        for (int i = 0; i < midiPlaybackEngine.getNumSounds(); ++i)
         {
-            sound->setEnvelopeParameters({ 0.0f, decayTime, 0.0f, 0.05f });
+            if (auto* sound = dynamic_cast<juce::SamplerSound*>(midiPlaybackEngine.getSound(i).get()))
+            {
+                sound->setEnvelopeParameters({ 0.0f, decayTime, 0.0f, 0.05f });
+            }
         }
     }
 }
@@ -103,8 +110,6 @@ void SamplerAudioProcessor::setStateInformation(const void* data, int sizeInByte
 
 juce::AudioProcessorEditor* SamplerAudioProcessor::createEditor()
 {
-    /* 1. We can use the GenericAudioProcessorEditor to show and test our parameters without needing to create
-     * an entire custom UI */
     return new juce::GenericAudioProcessorEditor(*this);
 }
 

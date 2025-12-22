@@ -46,5 +46,8 @@ private:
 
     juce::AudioFormatManager formatManager;
 
+    // 1. Let's create a parameter called "oldDecay" to compare with current decay values from the user
+    float oldDecay = 0.0f;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SamplerAudioProcessor)
 };
