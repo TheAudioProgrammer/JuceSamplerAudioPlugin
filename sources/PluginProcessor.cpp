@@ -62,6 +62,22 @@ void SamplerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
     juce::ScopedNoDenormals noDenormals;
     clearUnusedOutputChannels(buffer);
     midiPlaybackEngine.renderNextBlock(buffer, midiMessages, 0, buffer.getNumSamples());
+
+    // 2. Now let's get the decay parameter from our parameter layout
+    auto decay = apvts.getRawParameterValue("decay")->load();
+
+    /* 3. Since our decay param is 0.0 - 100.0 but our envelope function expects a value of 0.1 - 1.0,
+     * we will normalize our decay here. */
+    auto normalized = decay * 0.01f;
+
+    // 4. Now let's update each Sampler Sound with our new decay...
+    for (int i = 0; i < midiPlaybackEngine.getNumSounds(); ++i)
+    {
+        if (auto* sound = dynamic_cast<juce::SamplerSound*>(midiPlaybackEngine.getSound(i).get()))
+        {
+            sound->setEnvelopeParameters({ 0.0f, decayTime, 0.0f, 0.05f });
+        }
+    }
 }
 
 void SamplerAudioProcessor::clearUnusedOutputChannels(juce::AudioBuffer<float>& buffer) const
@@ -87,22 +103,17 @@ void SamplerAudioProcessor::setStateInformation(const void* data, int sizeInByte
 
 juce::AudioProcessorEditor* SamplerAudioProcessor::createEditor()
 {
-    return new SamplerAudioProcessorEditor(*this);
+    /* 1. We can use the GenericAudioProcessorEditor to show and test our parameters without needing to create
+     * an entire custom UI */
+    return new juce::GenericAudioProcessorEditor(*this);
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout SamplerAudioProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
-    /* 1. Let's create a lambda function that converts our float value into a string with a % at the end.
-     * This is so DAWs can show values to the user intuitively (i.e. as a percentage, rather than just a raw value) */
     auto valueToPercentAsString = [](float value, int) { return juce::String(int(value)) + "%"; };
 
-    /* 2. Now we can make the parameter for our decay.
-     * Reference our tutorial for this here: https://youtu.be/3dV86-mU2g0?si=2NCgjGPDa1wuUhua
-     *
-     * Note that we're using withStringFromValueFunction() and passing in the lambda as an arg.
-     * See here for more: https://docs.juce.com/master/classjuce_1_1RangedAudioParameterAttributes.html */
     layout.add(std::make_unique<juce::AudioParameterFloat>(
         juce::ParameterID { "decay", 1 },
         "Decay",
