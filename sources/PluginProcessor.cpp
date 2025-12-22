@@ -55,8 +55,6 @@ bool SamplerAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) c
 void SamplerAudioProcessor::prepareToPlay(double newSampleRate, int maximumBlockSize)
 {
     midiPlaybackEngine.setCurrentPlaybackSampleRate(newSampleRate);
-
-    // 2. Force decay to be updated on first audio process call
     oldDecay = -1.0f;
 }
 
@@ -68,11 +66,20 @@ void SamplerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce:
 
     auto decay = apvts.getRawParameterValue("decay")->load();
 
-    /* 3. Compare latest decay value with the old one.  If we have a new value, update the audio processing,
-     * otherwise skip unnecessary updates. */
-    if (juce::approximatelyEqual(decay, oldDecay))
+    if (!juce::approximatelyEqual(decay, oldDecay))
     {
         auto normalized = decay * 0.01f;
+
+        /* 1. Let's make the mapping of the decay a little more intuitive, giving the user more control over the range
+         * across the slider.  We'll do this by creating a quadratic mapping. This gives more granularity on the lower
+         * values, useful for filters, decays and other similar params. */
+        float skew = normalized * normalized;
+
+        /* 2. We could just use skew to update our envelope parameter, and this would work fine.  However, at 0.0
+         * the sound is so short there is no audible output.  This might confuse users. We'll make the "real"
+         * minimum 0.05, the smallest value where we hear audible sound. But to keep the sound between 0.0 and 1.0,
+         * we need to slightly "shrink" our decay time from 1 to 0.95, since we're adding 0.05 at the end. */
+        float decayTime = 0.95f * skew + 0.05f;
 
         // Store current decay to compare later
         oldDecay = decay;
