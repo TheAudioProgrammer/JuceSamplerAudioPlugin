@@ -43,7 +43,6 @@ void SamplerAudioProcessor::updateDecay()
             }
         }
 
-        // Store current decay to compare later
         oldDecay = decay;
     }
 }
@@ -54,14 +53,14 @@ void SamplerAudioProcessor::updateReverb()
 
     if (!juce::approximatelyEqual(reverbPercent, oldReverb))
     {
-        oldReverb = reverbPercent;
-
         juce::Reverb::Parameters reverbParams;
         reverbParams.roomSize = reverbPercent * 0.01f;
         reverbParams.damping = 0.5f;
         reverbParams.wetLevel = 0.33f;
         reverbParams.dryLevel = 0.4f;
         reverb.setParameters(reverbParams);
+
+        oldReverb = reverbPercent;
     }
 }
 
