@@ -8,7 +8,6 @@ juce::SamplerSound* SamplerAudioProcessor::loadSound(const juce::String& name,
                                     const void* data,
                                     size_t sizeInBytes)
 {
-    // 1. We can pull all of this other stuff from the constructor to here.
     auto inputStream = std::make_unique<juce::MemoryInputStream>(data, sizeInBytes, false);
 
     if (auto reader = formatManager.createReaderFor(std::move(inputStream)))
@@ -94,6 +93,24 @@ juce::AudioProcessorEditor* SamplerAudioProcessor::createEditor()
 juce::AudioProcessorValueTreeState::ParameterLayout SamplerAudioProcessor::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
+
+    /* 1. Let's create a lambda function that converts our float value into a string with a % at the end.
+     * This is so DAWs can show values to the user intuitively (i.e. as a percentage, rather than just a raw value) */
+    auto valueToPercentAsString = [](float value, int) { return juce::String(int(value)) + "%"; };
+
+    /* 2. Now we can make the parameter for our decay.
+     * Reference our tutorial for this here: https://youtu.be/3dV86-mU2g0?si=2NCgjGPDa1wuUhua
+     *
+     * Note that we're using withStringFromValueFunction() and passing in the lambda as an arg.
+     * See here for more: https://docs.juce.com/master/classjuce_1_1RangedAudioParameterAttributes.html */
+    layout.add(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "decay", 1 },
+        "Decay",
+        juce::NormalisableRange<float>(0.0f, 100.0f),
+        0.0f,
+        juce::AudioParameterFloatAttributes().
+        withStringFromValueFunction(valueToPercentAsString)));
+
     return layout;
 }
 
