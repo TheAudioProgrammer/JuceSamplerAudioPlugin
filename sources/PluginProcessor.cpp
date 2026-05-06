@@ -134,7 +134,7 @@ void SamplerAudioProcessor::setStateInformation(const void* data, int sizeInByte
 
 juce::AudioProcessorEditor* SamplerAudioProcessor::createEditor()
 {
-    return new juce::GenericAudioProcessorEditor(*this);
+    return new SamplerAudioProcessorEditor(*this);
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout SamplerAudioProcessor::createParameterLayout()

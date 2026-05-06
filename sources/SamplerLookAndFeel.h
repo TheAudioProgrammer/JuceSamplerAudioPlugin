@@ -43,7 +43,7 @@ namespace Fonts
 
 namespace Images
 {
-    juce::Image getBackground()
+    inline juce::Image getBackground()
     {
         return juce::ImageCache::getFromMemory(BinaryData::BG_1376x1032_1_png, BinaryData::BG_1376x1032_1_pngSize);
     }
