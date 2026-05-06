@@ -69,14 +69,18 @@ target_sources(${PROJECT_NAME} PRIVATE
 juce_generate_juce_header(${PROJECT_NAME})
 
 juce_add_binary_data(BinaryData SOURCES
-    sounds/c5.wav
-    sounds/d5.wav
-    sounds/e5.wav
-    sounds/f5.wav
-    sounds/g5.wav
-    sounds/a5.wav
-    sounds/b5.wav
-    sounds/c6.wav
+    assets/fonts/Inter-Regular.ttf
+    assets/fonts/Inter-Medium.ttf
+    assets/fonts/Inter-SemiBold.ttf
+    assets/images/BG_1376x1032_1.png
+    assets/sounds/c5.wav
+    assets/sounds/d5.wav
+    assets/sounds/e5.wav
+    assets/sounds/f5.wav
+    assets/sounds/g5.wav
+    assets/sounds/a5.wav
+    assets/sounds/b5.wav
+    assets/sounds/c6.wav
 )
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC
