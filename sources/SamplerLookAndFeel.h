@@ -7,7 +7,6 @@
 #include <juce_graphics/juce_graphics.h>
 #include <BinaryData.h>
 
-// 1. We're going to add some colors for use later
 namespace Colors
 {
     const juce::Colour textBright { 209, 209, 209 };
@@ -15,7 +14,6 @@ namespace Colors
     const juce::Colour textDim { 156, 157, 156 };
 }
 
-// 2. Now let's create a workflow to get our fonts
 namespace Fonts
 {
     static const juce::Typeface::Ptr typefaceRegular = juce::Typeface::createSystemTypefaceFor

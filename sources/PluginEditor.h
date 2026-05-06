@@ -14,7 +14,6 @@ public:
     void resized() override;
 
 private:
-    // 3. Now let's abstract out width and height so we only need to change in one place if we change the background
     static constexpr int windowWidth = 688;
     static constexpr int windowHeight = 516;
     SamplerAudioProcessor& audioProcessor;
