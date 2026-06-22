@@ -10,7 +10,7 @@ juce::SamplerSound* SamplerAudioProcessor::loadSound(const juce::String& name,
 {
     auto inputStream = std::make_unique<juce::MemoryInputStream>(data, sizeInBytes, false);
 
-    if (auto reader = formatManager.createReaderFor(std::move(inputStream)))
+    if (const auto rawReader = formatManager.createReaderFor(std::move(inputStream)))
     {
         juce::BigInteger midiNotes;
 
@@ -19,7 +19,10 @@ juce::SamplerSound* SamplerAudioProcessor::loadSound(const juce::String& name,
             midiNotes.setBit(note);
         }
 
-        return new juce::SamplerSound(name, *reader, midiNotes, originalMidiNote, 0.0, 0.1, 10.0);
+        // Store the raw readers in our vector of smart audio readers so they outlast this function call
+        audioReaders.emplace_back(rawReader);
+
+        return new juce::SamplerSound(name, *audioReaders.back(), midiNotes, originalMidiNote, 0.0, 0.1, 10.0);
     }
 
     return nullptr;

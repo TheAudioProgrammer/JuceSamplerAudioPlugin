@@ -45,4 +45,9 @@ namespace Images
     {
         return juce::ImageCache::getFromMemory(BinaryData::BG_1376x1032_1_png, BinaryData::BG_1376x1032_1_pngSize);
     }
+
+    inline juce::Image getKnob()
+    {
+        return juce::ImageCache::getFromMemory(BinaryData::Knob_152x132_129_png, BinaryData::Knob_152x132_129_pngSize);
+    }
 }

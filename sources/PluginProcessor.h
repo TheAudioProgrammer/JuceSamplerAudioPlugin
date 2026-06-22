@@ -49,6 +49,9 @@ private:
 
     juce::AudioFormatManager formatManager;
 
+    // Fixes memory leak with reader in loadSound()
+    std::vector<std::unique_ptr<juce::AudioFormatReader>> audioReaders;
+
     juce::Reverb reverb;
 
     float oldDecay = 0.0f;

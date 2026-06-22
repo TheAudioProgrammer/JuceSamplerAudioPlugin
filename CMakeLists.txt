@@ -68,11 +68,13 @@ target_sources(${PROJECT_NAME} PRIVATE
 
 juce_generate_juce_header(${PROJECT_NAME})
 
+# 1. Add the knob png strip to the asset list
 juce_add_binary_data(BinaryData SOURCES
     assets/fonts/Inter-Regular.ttf
     assets/fonts/Inter-Medium.ttf
     assets/fonts/Inter-SemiBold.ttf
     assets/images/BG_1376x1032_1.png
+    assets/images/Knob_152x132_129.png
     assets/sounds/c5.wav
     assets/sounds/d5.wav
     assets/sounds/e5.wav
