@@ -9,7 +9,7 @@ class SamplerAudioProcessorEditor : public juce::AudioProcessorEditor
 {
 public:
     explicit SamplerAudioProcessorEditor(SamplerAudioProcessor&);
-    ~SamplerAudioProcessorEditor() override;
+    ~SamplerAudioProcessorEditor() override = default;
 
     void paint(juce::Graphics&) override;
     void resized() override;

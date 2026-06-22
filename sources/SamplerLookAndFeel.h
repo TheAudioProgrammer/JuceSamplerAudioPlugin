@@ -31,7 +31,7 @@ namespace Fonts
 
     inline juce::Font getMediumFont(const float height = 14.0f)
     {
-        return { juce::FontOptions(typefaceBold).withHeight(height) };
+        return { juce::FontOptions(typefaceMedium).withHeight(height) };
     }
 
     inline juce::Font getBoldFont(const float height = 14.0f)

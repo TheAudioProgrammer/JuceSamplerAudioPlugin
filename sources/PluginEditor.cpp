@@ -10,10 +10,6 @@ SamplerAudioProcessorEditor::SamplerAudioProcessorEditor(SamplerAudioProcessor& 
     addAndMakeVisible(reverbKnob);
 }
 
-SamplerAudioProcessorEditor::~SamplerAudioProcessorEditor()
-{
-}
-
 void SamplerAudioProcessorEditor::paint(juce::Graphics& g)
 {
     g.drawImage(Images::getBackground(), { 0, 0, windowWidth, windowHeight });

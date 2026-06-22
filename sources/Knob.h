@@ -15,6 +15,8 @@ public:
         juce::AudioProcessorValueTreeState& apvts,
         const juce::ParameterID& parameterID);
 
+    ~Knob() override = default;
+
     void resized() override;
 
     juce::Slider& getSlider() { return slider; }
