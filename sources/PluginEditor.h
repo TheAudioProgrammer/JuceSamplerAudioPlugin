@@ -20,6 +20,7 @@ private:
     SamplerAudioProcessor& audioProcessor;
 
     Knob decayKnob { "Decay", audioProcessor.apvts, "decay" };
+    Knob reverbKnob { "Reverb", audioProcessor.apvts, "reverb" };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SamplerAudioProcessorEditor)
 };
