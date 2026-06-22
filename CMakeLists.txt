@@ -65,6 +65,8 @@ target_sources(${PROJECT_NAME} PRIVATE
         sources/PluginProcessor.h
         sources/SamplerLookAndFeel.cpp
         sources/SamplerLookAndFeel.h
+        sources/Knob.cpp
+        sources/Knob.h
 )
 
 juce_generate_juce_header(${PROJECT_NAME})
