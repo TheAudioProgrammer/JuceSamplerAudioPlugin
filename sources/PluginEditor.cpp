@@ -6,6 +6,7 @@ SamplerAudioProcessorEditor::SamplerAudioProcessorEditor(SamplerAudioProcessor& 
 {
     setOpaque(true);
     setSize(windowWidth, windowHeight);
+    addAndMakeVisible(decayKnob);
 }
 
 SamplerAudioProcessorEditor::~SamplerAudioProcessorEditor()
@@ -19,4 +20,5 @@ void SamplerAudioProcessorEditor::paint(juce::Graphics& g)
 
 void SamplerAudioProcessorEditor::resized()
 {
+    decayKnob.setTopLeftPosition(451, 91);
 }

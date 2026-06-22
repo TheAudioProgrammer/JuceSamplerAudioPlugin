@@ -8,7 +8,7 @@
 #include "juce_audio_processors/juce_audio_processors.h"
 
 
-class Knob : juce::Component
+class Knob : public juce::Component
 {
 public:
     Knob (const juce::String& text,

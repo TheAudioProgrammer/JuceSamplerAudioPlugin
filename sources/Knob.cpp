@@ -9,7 +9,10 @@ Knob::Knob(const juce::String& text,
            const juce::ParameterID& parameterID) :
     sliderLF(Images::getKnob(), 129), attachment(apvts, parameterID.getParamID(), slider)
 {
+    setSize(76, 107);
+
     slider.setSliderStyle(juce::Slider::SliderStyle::RotaryHorizontalVerticalDrag);
+    slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, getWidth(), 14);
     slider.setLookAndFeel(&sliderLF);
     addAndMakeVisible(slider);
 
@@ -23,6 +26,5 @@ Knob::Knob(const juce::String& text,
 void Knob::resized()
 {
     label.setBounds(0, 0, getWidth(), 19);
-    slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, getWidth(), 14);
     slider.setBounds(0, 19, getWidth(), 88);
 }
