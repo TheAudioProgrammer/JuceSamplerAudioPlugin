@@ -5,6 +5,7 @@
 #pragma once
 
 #include <juce_graphics/juce_graphics.h>
+#include <juce_gui_basics/juce_gui_basics.h>
 #include <BinaryData.h>
 
 namespace Colors
@@ -51,3 +52,20 @@ namespace Images
         return juce::ImageCache::getFromMemory(BinaryData::Knob_152x132_129_png, BinaryData::Knob_152x132_129_pngSize);
     }
 }
+
+// 1. Now let's set up the drawing behavior for the knob png strip
+class KnobLookAndFeel : public juce::LookAndFeel_V4
+{
+public:
+    KnobLookAndFeel(const juce::Image& image, int numFrames);
+
+    void drawRotarySlider(juce::Graphics&, int x, int y, int width, int height,
+                            float sliderPosProportional, float rotaryStartAngle,
+                            float rotaryEndAngle, juce::Slider&) override;
+
+private:
+    juce::Image filmstrip;
+    int numFrames;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(KnobLookAndFeel)
+};

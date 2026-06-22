@@ -63,12 +63,12 @@ target_sources(${PROJECT_NAME} PRIVATE
         sources/PluginEditor.h
         sources/PluginProcessor.cpp
         sources/PluginProcessor.h
+        sources/SamplerLookAndFeel.cpp
         sources/SamplerLookAndFeel.h
 )
 
 juce_generate_juce_header(${PROJECT_NAME})
 
-# 1. Add the knob png strip to the asset list
 juce_add_binary_data(BinaryData SOURCES
     assets/fonts/Inter-Regular.ttf
     assets/fonts/Inter-Medium.ttf
